@@ -28,7 +28,6 @@ namespace ConferenceTracker
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            SecretMessage = Configuration["SecretMessage"].Trim();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("ConferenceTracker"));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -52,6 +51,7 @@ namespace ConferenceTracker
             services.AddTransient<IPresentationRepository, PresentationRepository>();
             services.AddTransient<ISpeakerRepository, SpeakerRepository>();
 
+            SecretMessage = Configuration["ConfigureServices"];
 
 
         }
@@ -60,15 +60,13 @@ namespace ConferenceTracker
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
-            using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            using (var context = scope.ServiceProvider.GetService<ApplicationDbContext>())
-                context.Database.EnsureCreated();
 
             //Set Up the Web Application to Use the HSTS Header
             if (env.IsDevelopment())
             {
                 logger.LogInformation("Environment is in development");
-                app.UseDeveloperExceptionPage().UseDatabaseErrorPage();
+                app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
             }
             else
             {
@@ -77,11 +75,17 @@ namespace ConferenceTracker
                 app.UseHsts();
             }
 
-            app.UseStaticFiles();
+            using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            using (var context = scope.ServiceProvider.GetService<ApplicationDbContext>())
+                context.Database.EnsureCreated();
+
 
             app.UseCors(_allowOrigins);
+
             //Redirect HTTP Request to Use HTTPS Instead
             app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
 
             app.UseCookiePolicy();
             app.UseRouting();
