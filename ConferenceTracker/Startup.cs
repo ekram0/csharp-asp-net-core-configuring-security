@@ -30,12 +30,7 @@ namespace ConferenceTracker
         {
             SecretMessage = Configuration["SecretMessage"].Trim();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("ConferenceTracker"));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddControllersWithViews();
-            services.AddRazorPages();
-            services.AddTransient<IPresentationRepository, PresentationRepository>();
-            services.AddTransient<ISpeakerRepository, SpeakerRepository>();
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddCors(options =>
             {
@@ -46,12 +41,19 @@ namespace ConferenceTracker
                 });
             });
 
-            services.AddControllersWithViews();
-            services.Configure<CookiePolicyOptions>(options => 
+            services.Configure<CookiePolicyOptions>(options =>
             {
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
+
+            services.AddControllersWithViews();
+            services.AddRazorPages();
+            services.AddTransient<IPresentationRepository, PresentationRepository>();
+            services.AddTransient<ISpeakerRepository, SpeakerRepository>();
+
+
+
         }
 
 
