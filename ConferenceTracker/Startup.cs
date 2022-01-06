@@ -8,12 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
+using Microsoft.Extensions.Logging;
 
 namespace ConferenceTracker
 {
     public class Startup
     {
+        private readonly string _allowOrigins = "_allowedOrigins";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -26,6 +28,7 @@ namespace ConferenceTracker
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            SecretMessage = Configuration["SecretMessage"].Trim();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("ConferenceTracker"));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -33,18 +36,51 @@ namespace ConferenceTracker
             services.AddRazorPages();
             services.AddTransient<IPresentationRepository, PresentationRepository>();
             services.AddTransient<ISpeakerRepository, SpeakerRepository>();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy(_allowOrigins, builder =>
+                {
+                    //this's name of our cors policy and providing what domains will be premitted
+                    builder.WithOrigins("http://pluralsight.com");
+                });
+            });
+
+            services.AddControllersWithViews();
+            services.Configure<CookiePolicyOptions>(options => 
+            {
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
         }
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {            
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
+        {
             using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             using (var context = scope.ServiceProvider.GetService<ApplicationDbContext>())
                 context.Database.EnsureCreated();
 
+            //Set Up the Web Application to Use the HSTS Header
+            if (!env.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+            }
+            else
+            {
+                logger.LogInformation("Environment is in development");
+                app.UseDeveloperExceptionPage().UseDatabaseErrorPage();
+            }
+
             app.UseStaticFiles();
 
+            app.UseCors(_allowOrigins);
+            //Redirect HTTP Request to Use HTTPS Instead
+            app.UseHttpsRedirection();
+
+            app.UseCookiePolicy();
             app.UseRouting();
 
             app.UseAuthentication();
