@@ -14,7 +14,7 @@ namespace ConferenceTracker
 {
     public class Startup
     {
-        private readonly string _allowOrigins = "_allowedOrigins";
+        private readonly string _allowedOrigins = "_allowedOrigins";
 
         public Startup(IConfiguration configuration)
         {
@@ -33,7 +33,7 @@ namespace ConferenceTracker
 
             services.AddCors(options =>
             {
-                options.AddPolicy(_allowOrigins, builder =>
+                options.AddPolicy(_allowedOrigins, builder =>
                 {
                     //this's name of our cors policy and providing what domains will be premitted
                     builder.WithOrigins("http://pluralsight.com");
@@ -80,7 +80,7 @@ namespace ConferenceTracker
                 context.Database.EnsureCreated();
 
 
-            app.UseCors(_allowOrigins);
+            app.UseCors(_allowedOrigins);
 
             //Redirect HTTP Request to Use HTTPS Instead
             app.UseHttpsRedirection();
