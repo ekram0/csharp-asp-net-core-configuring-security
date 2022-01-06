@@ -65,15 +65,16 @@ namespace ConferenceTracker
                 context.Database.EnsureCreated();
 
             //Set Up the Web Application to Use the HSTS Header
-            if (!env.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-            }
-            else
+            if (env.IsDevelopment())
             {
                 logger.LogInformation("Environment is in development");
                 app.UseDeveloperExceptionPage().UseDatabaseErrorPage();
+            }
+            else
+            {
+
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
             }
 
             app.UseStaticFiles();
